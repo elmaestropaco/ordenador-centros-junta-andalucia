@@ -528,6 +528,34 @@
     }));
   }
 
+  function exportRowsForXlsx() {
+    return state.currentRows.map((row, index) => ({
+      marcar: "☐",
+      orden: index + 1,
+      código: row.codigo,
+      tipo: row.tipoAbreviado,
+      nombre: row.nombre,
+      denominación: row.denominacion,
+      distancia_km: row.distanciaKm === null ? "" : Number(row.distanciaKm.toFixed(3)),
+      localidad: row.localidad,
+      municipio: row.municipio,
+      provincia: row.provincia,
+      código_postal: row.codigoPostal,
+      teléfono: row.telefono,
+      dependencia: row.dependencia,
+      enseñanzas: row.ensenanzas,
+      servicios: row.servicios,
+      bilingüe: row.biling,
+      voluntario: row.esVoluntario ? "Sí" : "",
+      zts: row.esZTS ? "Sí" : "",
+      difícil_desempeño: row.esDificilDesempeno ? "Sí" : "",
+      listas_origen: row.listasOrigenLabels.join(" | "),
+      email: row.email || "",
+      latitud: row.latitud ?? "",
+      longitud: row.longitud ?? "",
+    }));
+  }
+
   function downloadBlob(filename, content, mimeType) {
     const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
@@ -561,7 +589,7 @@
   }
 
   function exportXlsx() {
-    const rows = exportRowsForDownload();
+    const rows = exportRowsForXlsx();
     if (!rows.length) {
       setNotice("No hay resultados para exportar.");
       return;
@@ -573,6 +601,31 @@
     }
 
     const worksheet = window.XLSX.utils.json_to_sheet(rows);
+    worksheet["!cols"] = [
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 12 },
+      { wch: 10 },
+      { wch: 34 },
+      { wch: 38 },
+      { wch: 14 },
+      { wch: 16 },
+      { wch: 22 },
+      { wch: 16 },
+      { wch: 12 },
+      { wch: 14 },
+      { wch: 16 },
+      { wch: 20 },
+      { wch: 18 },
+      { wch: 12 },
+      { wch: 12 },
+      { wch: 10 },
+      { wch: 18 },
+      { wch: 28 },
+      { wch: 30 },
+      { wch: 12 },
+      { wch: 12 },
+    ];
     const workbook = window.XLSX.utils.book_new();
     window.XLSX.utils.book_append_sheet(workbook, worksheet, "Centros");
     window.XLSX.writeFile(workbook, "centros-ordenados.xlsx");
