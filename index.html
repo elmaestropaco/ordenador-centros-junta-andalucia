@@ -98,11 +98,9 @@
                   <span>Extras</span>
                   <label><input id="onlyBilingualCheckbox" type="checkbox" /> Solo bilingües</label>
                   <label><input id="onlyWithCoordsCheckbox" type="checkbox" /> Solo con coordenadas</label>
-                  <label
-                    class="disabled-inline"
-                    id="difficultCheckboxWrap"
-                    title="Tus CSV actuales no traen una marca explícita de difícil desempeño. El filtro queda desactivado hasta que añadas un listado con esa categoría."
-                  >
+                  <label title="Centros incluidos en el PDF oficial de centros voluntarios."><input id="onlyVoluntaryCheckbox" type="checkbox" /> Solo voluntarios</label>
+                  <label title="Centros incluidos en el PDF oficial de ZTS."><input id="onlyZtsCheckbox" type="checkbox" /> Solo ZTS</label>
+                  <label id="difficultCheckboxWrap" title="Centros incluidos en el PDF oficial de difícil desempeño.">
                     <input id="onlyDifficultCheckbox" type="checkbox" /> Solo difícil desempeño
                   </label>
                 </div>
@@ -170,7 +168,7 @@
                   <th>Distancia</th>
                   <th>Localidad</th>
                   <th>Provincia</th>
-                  <th>Domicilio</th>
+                  <th>Otros</th>
                   <th>Detalles</th>
                 </tr>
               </thead>

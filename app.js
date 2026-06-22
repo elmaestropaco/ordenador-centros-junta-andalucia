@@ -10,6 +10,8 @@
     sources: new Set(),
   };
 
+  const STORAGE_KEY = "centros-andalucia-preferencias";
+
   const TYPE_LABELS = {
     CC: "Centro de Convenio",
     CEIP: "Colegio de Educación Infantil y Primaria",
@@ -30,6 +32,8 @@
     textSearchInput: document.getElementById("textSearchInput"),
     onlyBilingualCheckbox: document.getElementById("onlyBilingualCheckbox"),
     onlyWithCoordsCheckbox: document.getElementById("onlyWithCoordsCheckbox"),
+    onlyVoluntaryCheckbox: document.getElementById("onlyVoluntaryCheckbox"),
+    onlyZtsCheckbox: document.getElementById("onlyZtsCheckbox"),
     onlyDifficultCheckbox: document.getElementById("onlyDifficultCheckbox"),
     difficultCheckboxWrap: document.getElementById("difficultCheckboxWrap"),
     provinceFilters: document.getElementById("provinceFilters"),
@@ -85,6 +89,77 @@
 
     els.noticeBox.style.display = "block";
     els.noticeBox.textContent = message;
+  }
+
+  function savePreferences() {
+    const payload = {
+      originInput: els.originInput.value.trim(),
+      origin: state.origin,
+      locality: els.localitySelect.value,
+      text: els.textSearchInput.value,
+      onlyBilingual: els.onlyBilingualCheckbox.checked,
+      onlyWithCoords: els.onlyWithCoordsCheckbox.checked,
+      onlyVoluntary: els.onlyVoluntaryCheckbox.checked,
+      onlyZts: els.onlyZtsCheckbox.checked,
+      onlyDifficult: els.onlyDifficultCheckbox.checked,
+      provinces: Array.from(state.provinces),
+      types: Array.from(state.types),
+      sources: Array.from(state.sources),
+    };
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  }
+
+  function restorePreferences() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      return;
+    }
+
+    try {
+      const saved = JSON.parse(raw);
+      if (saved.originInput) {
+        els.originInput.value = saved.originInput;
+      }
+      if (saved.origin) {
+        state.origin = saved.origin;
+        setOriginStatus(`Origen recordado: ${saved.origin.raw || saved.origin.label}`, "neutral");
+      }
+      if (saved.text) {
+        els.textSearchInput.value = saved.text;
+      }
+      if (saved.onlyBilingual) els.onlyBilingualCheckbox.checked = true;
+      if (saved.onlyWithCoords) els.onlyWithCoordsCheckbox.checked = true;
+      if (saved.onlyVoluntary) els.onlyVoluntaryCheckbox.checked = true;
+      if (saved.onlyZts) els.onlyZtsCheckbox.checked = true;
+      if (saved.onlyDifficult) els.onlyDifficultCheckbox.checked = true;
+
+      if (Array.isArray(saved.provinces)) {
+        els.provinceFilters.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
+          checkbox.checked = saved.provinces.includes(checkbox.value);
+          setChipState(checkbox);
+        });
+      }
+      if (Array.isArray(saved.types)) {
+        els.typeFilters.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
+          checkbox.checked = saved.types.includes(checkbox.value);
+          setChipState(checkbox);
+        });
+      }
+      if (Array.isArray(saved.sources)) {
+        els.sourceFilters.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
+          checkbox.checked = saved.sources.includes(checkbox.value);
+          setChipState(checkbox);
+        });
+      }
+
+      fillLocalityOptions();
+      if (saved.locality) {
+        els.localitySelect.value = saved.locality;
+      }
+    } catch (_error) {
+      localStorage.removeItem(STORAGE_KEY);
+    }
   }
 
   function getSelectedCheckboxValues(container) {
@@ -217,6 +292,8 @@
     const text = normalizeSearch(els.textSearchInput.value);
     const onlyBilingual = els.onlyBilingualCheckbox.checked;
     const onlyWithCoords = els.onlyWithCoordsCheckbox.checked;
+    const onlyVoluntary = els.onlyVoluntaryCheckbox.checked;
+    const onlyZts = els.onlyZtsCheckbox.checked;
     const onlyDifficult = els.onlyDifficultCheckbox.checked;
     const provinceIdMap = provinceLabelToIdMap();
 
@@ -226,6 +303,8 @@
       .filter((item) => !text || item.textoBusqueda.includes(text))
       .filter((item) => !onlyBilingual || item.esBilingue)
       .filter((item) => !onlyWithCoords || hasCoordinates(item))
+      .filter((item) => !onlyVoluntary || item.esVoluntario)
+      .filter((item) => !onlyZts || item.esZTS)
       .filter((item) => !onlyDifficult || item.esDificilDesempeno)
       .filter((item) => !state.types.size || state.types.has(slugify(item.tipoAbreviado)))
       .filter((item) => !state.sources.size || item.listasOrigenIds.some((sourceId) => state.sources.has(sourceId)))
@@ -253,6 +332,8 @@
     if (els.textSearchInput.value.trim()) pills.push(activeFilterPill(`Texto: ${els.textSearchInput.value.trim()}`));
     if (els.onlyBilingualCheckbox.checked) pills.push(activeFilterPill("Solo bilingües"));
     if (els.onlyWithCoordsCheckbox.checked) pills.push(activeFilterPill("Solo con coordenadas"));
+    if (els.onlyVoluntaryCheckbox.checked) pills.push(activeFilterPill("Solo voluntarios"));
+    if (els.onlyZtsCheckbox.checked) pills.push(activeFilterPill("Solo ZTS"));
     if (els.onlyDifficultCheckbox.checked) pills.push(activeFilterPill("Solo difícil desempeño"));
 
     Array.from(els.typeFilters.querySelectorAll('input:checked')).forEach((input) => {
@@ -281,13 +362,27 @@
       .map((row, index) => {
         const distanceText = row.distanciaKm === null ? "Sin dato" : `${row.distanciaKm.toFixed(2)} km`;
         const details = [];
+        const otherTags = [];
+        const rowClasses = ["result-row"];
 
         if (row.dependencia) details.push(`<span class="tag">${escapeHtml(row.dependencia)}</span>`);
         if (row.esBilingue) details.push(`<span class="tag">Bilingüe ${escapeHtml(row.biling)}</span>`);
         row.listasOrigenLabels.forEach((label) => details.push(`<span class="tag">${escapeHtml(label)}</span>`));
+        if (row.esVoluntario) {
+          otherTags.push('<span class="tag tag-otros tag-voluntario">Voluntario</span>');
+          rowClasses.push("row-voluntario");
+        }
+        if (row.esZTS) {
+          otherTags.push('<span class="tag tag-otros tag-zts">ZTS</span>');
+          rowClasses.push("row-zts");
+        }
+        if (row.esDificilDesempeno) {
+          otherTags.push('<span class="tag tag-otros tag-dificil">Difícil desempeño</span>');
+          rowClasses.push("row-dificil");
+        }
 
         return `
-          <tr>
+          <tr class="${rowClasses.join(" ")}">
             <td><span class="rank-badge">${index + 1}</span></td>
             <td><code>${escapeHtml(row.codigo)}</code></td>
             <td><span class="type-badge" title="${escapeHtml(typeTooltip(row.tipoAbreviado))}">${escapeHtml(row.tipoAbreviado)}</span></td>
@@ -301,15 +396,13 @@
             <td>${escapeHtml(row.localidad || "-")}</td>
             <td>${escapeHtml(row.provincia || "-")}</td>
             <td>
-              <div class="center-main">
-                <span>${escapeHtml(row.domicilio || "-")}</span>
-                <span class="muted">${escapeHtml(row.municipio || "")} · ${escapeHtml(row.codigoPostal || "-")}</span>
-              </div>
+              <div class="tag-list">${otherTags.join("") || '<span class="muted">Sin marcas</span>'}</div>
             </td>
             <td>
               <div class="center-main">
                 <div class="tag-list">${details.join("") || '<span class="muted">Sin extras</span>'}</div>
-                <span class="muted">${escapeHtml(row.telefono || "Sin teléfono")} · ${escapeHtml(row.ensenanzas || "Sin enseñanzas")}</span>
+                <span class="muted">${escapeHtml(row.municipio || "")} · ${escapeHtml(row.telefono || "Sin teléfono")}</span>
+                <span class="muted">${escapeHtml(row.ensenanzas || "Sin enseñanzas")}</span>
               </div>
             </td>
           </tr>
@@ -330,6 +423,7 @@
       notices.push("Algunos centros no tienen coordenadas y se colocan al final al ordenar por distancia.");
     }
     setNotice(notices.join(" "));
+    savePreferences();
   }
 
   async function geocodeOrigin(query) {
@@ -415,7 +509,6 @@
       nombre: row.nombre,
       denominación: row.denominacion,
       distancia_km: row.distanciaKm === null ? "" : Number(row.distanciaKm.toFixed(3)),
-      domicilio: row.domicilio,
       localidad: row.localidad,
       municipio: row.municipio,
       provincia: row.provincia,
@@ -425,6 +518,9 @@
       enseñanzas: row.ensenanzas,
       servicios: row.servicios,
       bilingüe: row.biling,
+      voluntario: row.esVoluntario ? "Sí" : "",
+      zts: row.esZTS ? "Sí" : "",
+      difícil_desempeño: row.esDificilDesempeno ? "Sí" : "",
       listas_origen: row.listasOrigenLabels.join(" | "),
       email: row.email || "",
       latitud: row.latitud ?? "",
@@ -515,7 +611,7 @@
       headStyles: { fillColor: [0, 109, 119] },
       alternateRowStyles: { fillColor: [245, 249, 250] },
       margin: { left: 10, right: 10 },
-      head: [["#", "Código", "Tipo", "Centro", "Distancia", "Localidad", "Provincia", "Domicilio"]],
+      head: [["#", "Código", "Tipo", "Centro", "Distancia", "Localidad", "Provincia", "Otros"]],
       body: state.currentRows.map((row, index) => [
         index + 1,
         row.codigo,
@@ -524,7 +620,7 @@
         row.distanciaKm === null ? "Sin dato" : `${row.distanciaKm.toFixed(2)} km`,
         row.localidad,
         row.provincia,
-        row.domicilio,
+        row.otrosLabels.join(", ") || "Sin marcas",
       ]),
       didDrawPage: function (data) {
         const pageSize = doc.internal.pageSize;
@@ -588,6 +684,8 @@
     els.textSearchInput.value = "";
     els.onlyBilingualCheckbox.checked = false;
     els.onlyWithCoordsCheckbox.checked = false;
+    els.onlyVoluntaryCheckbox.checked = false;
+    els.onlyZtsCheckbox.checked = false;
     els.onlyDifficultCheckbox.checked = false;
     clearCheckboxes(els.provinceFilters);
     fillLocalityOptions();
@@ -604,6 +702,8 @@
     els.textSearchInput.addEventListener("input", renderResults);
     els.onlyBilingualCheckbox.addEventListener("change", renderResults);
     els.onlyWithCoordsCheckbox.addEventListener("change", renderResults);
+    els.onlyVoluntaryCheckbox.addEventListener("change", renderResults);
+    els.onlyZtsCheckbox.addEventListener("change", renderResults);
     els.onlyDifficultCheckbox.addEventListener("change", renderResults);
 
     els.selectAllProvincesButton.addEventListener("click", () => {
@@ -653,8 +753,7 @@
 
     fillLocalityOptions();
 
-    els.onlyDifficultCheckbox.disabled = !meta.hasDifficultPerformanceData;
-
+    restorePreferences();
     setupAccordion();
     bindEvents();
     renderResults();

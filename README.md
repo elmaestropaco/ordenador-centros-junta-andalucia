@@ -7,6 +7,7 @@ Web local para ordenar centros por distancia a una calle, pueblo o código posta
 - Une los CSV de `database` en un único listado.
 - Cruza los centros con el directorio oficial de la Junta para obtener coordenadas.
 - Permite filtrar por tipo de centro, varias provincias a la vez, localidad, bilingüe y lista de origen.
+- Añade filtros especiales para centros `Voluntarios`, `ZTS` y de `Difícil desempeño` a partir de los PDF de la carpeta `database`.
 - Ordena por distancia desde un punto introducido por texto.
 - Exporta los resultados visibles a `CSV`, `XLSX` y `PDF`.
 - Copia al portapapeles el orden actual de códigos.
@@ -38,6 +39,8 @@ python .\scripts\build_dataset.py
 ```
 
 Después recarga `index.html`.
+
+Los PDF de `Voluntario`, `ZTS` y `Difícil desempeño` también se cruzan automáticamente al regenerar.
 
 ## Notas
 

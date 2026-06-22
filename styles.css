@@ -353,7 +353,8 @@ select:focus {
 .chip-grid-provinces {
   max-height: 220px;
   overflow-y: auto;
-  padding-right: 4px;
+  padding: 2px 8px 6px 2px;
+  margin-right: -2px;
 }
 
 .chip {
@@ -522,6 +523,38 @@ tbody tr:hover {
   background: rgba(0, 109, 119, 0.04);
 }
 
+tbody tr.result-row.row-voluntario {
+  background: rgba(255, 214, 140, 0.62);
+}
+
+tbody tr.result-row.row-zts {
+  background: rgba(173, 227, 235, 0.62);
+}
+
+tbody tr.result-row.row-dificil {
+  background: rgba(255, 176, 176, 0.62);
+}
+
+tbody tr.result-row.row-voluntario.row-zts {
+  background: linear-gradient(90deg, rgba(255, 214, 140, 0.62), rgba(173, 227, 235, 0.62));
+}
+
+tbody tr.result-row.row-voluntario.row-dificil {
+  background: linear-gradient(90deg, rgba(255, 214, 140, 0.62), rgba(255, 176, 176, 0.62));
+}
+
+tbody tr.result-row.row-zts.row-dificil {
+  background: linear-gradient(90deg, rgba(173, 227, 235, 0.62), rgba(255, 176, 176, 0.62));
+}
+
+tbody tr.result-row.row-voluntario.row-zts.row-dificil {
+  background: linear-gradient(90deg, rgba(255, 214, 140, 0.62), rgba(173, 227, 235, 0.56), rgba(255, 176, 176, 0.62));
+}
+
+tbody tr.result-row:hover {
+  filter: brightness(0.985);
+}
+
 .center-main {
   display: grid;
   gap: 5px;
@@ -558,6 +591,25 @@ tbody tr:hover {
   font-size: 0.82rem;
   color: var(--accent-strong);
   background: var(--accent-soft);
+}
+
+.tag-otros {
+  font-weight: 800;
+}
+
+.tag-voluntario {
+  color: #7a4a00;
+  background: #ffe8bf;
+}
+
+.tag-zts {
+  color: #0d5560;
+  background: #cfeff3;
+}
+
+.tag-dificil {
+  color: #7f1d1d;
+  background: #ffd6d6;
 }
 
 .type-badge {
