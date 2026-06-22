@@ -10,6 +10,17 @@
     sources: new Set(),
   };
 
+  const TYPE_LABELS = {
+    CC: "Centro de Convenio",
+    CEIP: "Colegio de Educación Infantil y Primaria",
+    CEP: "Colegio de Educación Primaria",
+    CPR: "Colegio Público Rural",
+    IES: "Instituto de Educación Secundaria",
+    IPEP: "Instituto Provincial de Educación Permanente",
+    SESO: "Sección de Educación Secundaria Obligatoria",
+    SIPEP: "Sección de Instituto Provincial de Educación Permanente",
+  };
+
   const els = {
     originForm: document.getElementById("originForm"),
     originInput: document.getElementById("originInput"),
@@ -34,8 +45,10 @@
     resultsSummary: document.getElementById("resultsSummary"),
     noticeBox: document.getElementById("noticeBox"),
     copyCodesButton: document.getElementById("copyCodesButton"),
+    exportPdfButton: document.getElementById("exportPdfButton"),
     exportCsvButton: document.getElementById("exportCsvButton"),
     exportXlsxButton: document.getElementById("exportXlsxButton"),
+    filterSections: Array.from(document.querySelectorAll(".filter-section")),
   };
 
   function escapeHtml(value) {
@@ -92,11 +105,16 @@
     items.forEach((item) => {
       const label = document.createElement("label");
       label.className = "chip";
+      const tooltip = TYPE_LABELS[item.label] ? ` title="${escapeHtml(TYPE_LABELS[item.label])}"` : "";
       label.innerHTML = `
-        <input type="checkbox" value="${escapeHtml(item.id)}" />
-        <span>${escapeHtml(item.label)}</span>
+        <input type="checkbox" value="${escapeHtml(item.id)}"${tooltip} />
+        <span${tooltip}>${escapeHtml(item.label)}</span>
         <small>${item.count}</small>
       `;
+
+      if (TYPE_LABELS[item.label]) {
+        label.title = TYPE_LABELS[item.label];
+      }
 
       const checkbox = label.querySelector("input");
       checkbox.addEventListener("change", () => {
@@ -222,6 +240,10 @@
     return `<span class="filter-pill">${escapeHtml(label)}</span>`;
   }
 
+  function typeTooltip(typeAbbreviation) {
+    return TYPE_LABELS[typeAbbreviation] || typeAbbreviation;
+  }
+
   function renderActiveFilters() {
     const pills = [];
     const selectedProvinces = selectedProvinceLabels();
@@ -268,7 +290,7 @@
           <tr>
             <td><span class="rank-badge">${index + 1}</span></td>
             <td><code>${escapeHtml(row.codigo)}</code></td>
-            <td><span class="type-badge">${escapeHtml(row.tipoAbreviado)}</span></td>
+            <td><span class="type-badge" title="${escapeHtml(typeTooltip(row.tipoAbreviado))}">${escapeHtml(row.tipoAbreviado)}</span></td>
             <td>
               <div class="center-main">
                 <strong>${escapeHtml(row.nombre)}</strong>
@@ -304,11 +326,6 @@
     els.resultsSummary.textContent = `${state.currentRows.length} resultados · ${orderedBy}`;
 
     const notices = [];
-    if (!meta.hasDifficultPerformanceData) {
-      notices.push(
-        "Tus CSV actuales no traen una marca explícita de difícil desempeño. Ese filtro queda desactivado hasta que añadas un listado con esa categoría.",
-      );
-    }
     if (state.origin && state.currentRows.some((row) => row.distanciaKm === null)) {
       notices.push("Algunos centros no tienen coordenadas y se colocan al final al ordenar por distancia.");
     }
@@ -465,6 +482,61 @@
     window.XLSX.writeFile(workbook, "centros-ordenados.xlsx");
   }
 
+  function exportPdf() {
+    const rows = exportRowsForDownload();
+    if (!rows.length) {
+      setNotice("No hay resultados para exportar.");
+      return;
+    }
+
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      setNotice("La librería PDF no está disponible en esta página.");
+      return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    const exportDate = new Date().toLocaleString("es-ES");
+    const filterText = els.activeFilters.textContent?.trim() || "Sin filtros activos";
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.text("Centros ordenados", 14, 14);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text(`Exportado: ${exportDate}`, 14, 20);
+
+    const wrappedFilters = doc.splitTextToSize(`Filtros: ${filterText}`, 265);
+    doc.text(wrappedFilters, 14, 26);
+
+    doc.autoTable({
+      startY: 26 + wrappedFilters.length * 4 + 2,
+      styles: { font: "helvetica", fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [0, 109, 119] },
+      alternateRowStyles: { fillColor: [245, 249, 250] },
+      margin: { left: 10, right: 10 },
+      head: [["#", "Código", "Tipo", "Centro", "Distancia", "Localidad", "Provincia", "Domicilio"]],
+      body: state.currentRows.map((row, index) => [
+        index + 1,
+        row.codigo,
+        row.tipoAbreviado,
+        row.nombre,
+        row.distanciaKm === null ? "Sin dato" : `${row.distanciaKm.toFixed(2)} km`,
+        row.localidad,
+        row.provincia,
+        row.domicilio,
+      ]),
+      didDrawPage: function (data) {
+        const pageSize = doc.internal.pageSize;
+        const pageHeight = pageSize.height ? pageSize.height : pageSize.getHeight();
+        doc.setFontSize(8);
+        doc.text(`Página ${data.pageNumber}`, pageSize.getWidth() - 24, pageHeight - 6);
+      },
+    });
+
+    doc.save("centros-ordenados.pdf");
+  }
+
   async function copyCodes() {
     if (!state.currentRows.length) {
       setNotice("No hay resultados para copiar.");
@@ -491,6 +563,22 @@
     container.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
       checkbox.checked = checked;
       setChipState(checkbox);
+    });
+  }
+
+  function setupAccordion() {
+    els.filterSections.forEach((section) => {
+      section.addEventListener("toggle", () => {
+        if (!section.open) {
+          return;
+        }
+
+        els.filterSections.forEach((otherSection) => {
+          if (otherSection !== section) {
+            otherSection.open = false;
+          }
+        });
+      });
     });
   }
 
@@ -542,6 +630,7 @@
 
     els.resetFiltersButton.addEventListener("click", resetFilters);
     els.exportCsvButton.addEventListener("click", exportCsv);
+    els.exportPdfButton.addEventListener("click", exportPdf);
     els.exportXlsxButton.addEventListener("click", exportXlsx);
     els.copyCodesButton.addEventListener("click", copyCodes);
   }
@@ -565,10 +654,8 @@
     fillLocalityOptions();
 
     els.onlyDifficultCheckbox.disabled = !meta.hasDifficultPerformanceData;
-    if (!meta.hasDifficultPerformanceData) {
-      els.difficultCheckboxWrap.title = "Los CSV actuales no incluyen esa marca.";
-    }
 
+    setupAccordion();
     bindEvents();
     renderResults();
   }

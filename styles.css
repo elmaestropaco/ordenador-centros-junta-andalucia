@@ -69,21 +69,39 @@ body {
 }
 
 .hero-copy {
-  padding: 20px 24px;
+  padding: 34px 24px 30px;
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.64), transparent 52%),
+    linear-gradient(180deg, rgba(255, 252, 247, 0.94), rgba(255, 248, 239, 0.84));
+}
+
+.hero-kicker {
+  margin: 0 0 8px;
+  color: var(--accent-strong);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.76rem;
+  font-weight: 800;
 }
 
 .hero-copy h1 {
   margin: 0;
   max-width: none;
-  font-size: clamp(1.7rem, 3vw, 2.6rem);
-  line-height: 1.02;
+  font-family: "Georgia", "Palatino Linotype", "Book Antiqua", serif;
+  font-size: clamp(2.3rem, 5vw, 4rem);
+  line-height: 0.96;
+  letter-spacing: -0.03em;
+  color: var(--accent-strong);
+  text-wrap: balance;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 .lead {
-  margin: 10px 0 0;
-  max-width: 78ch;
-  font-size: 0.98rem;
-  line-height: 1.55;
+  margin: 12px auto 0;
+  max-width: 62ch;
+  font-size: 1rem;
+  line-height: 1.6;
   color: var(--muted);
 }
 
@@ -117,6 +135,15 @@ body {
   gap: 12px;
 }
 
+.filter-group-header,
+.group-actions {
+  flex-wrap: wrap;
+}
+
+.filter-group-header {
+  align-items: flex-start;
+}
+
 .panel-header {
   margin-bottom: 16px;
 }
@@ -142,10 +169,10 @@ body {
 .origin-form {
   display: grid;
   gap: 14px;
-  padding: 18px;
+  padding: 4px 0 0;
   border-radius: var(--radius-lg);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(248, 255, 254, 0.76));
-  border: 1px solid rgba(0, 109, 119, 0.12);
+  background: transparent;
+  border: 0;
 }
 
 .filter-section {
@@ -164,10 +191,11 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px 16px;
+  padding: 16px 18px;
   cursor: pointer;
   list-style: none;
   font-weight: 800;
+  line-height: 1.35;
 }
 
 .filter-summary::-webkit-details-marker {
@@ -195,14 +223,15 @@ body {
 
 .summary-hint {
   margin-left: auto;
-  padding-right: 8px;
+  padding: 0 8px 0 12px;
   color: var(--muted);
   font-size: 0.86rem;
   font-weight: 600;
+  line-height: 1.35;
 }
 
 .filter-section-body {
-  padding: 0 16px 16px;
+  padding: 0 18px 18px;
 }
 
 .filters-grid {
@@ -396,12 +425,23 @@ select:focus {
 
 .tiny-button {
   min-height: 36px;
-  padding: 0 13px;
+  padding: 0 15px;
   font-size: 0.9rem;
+  line-height: 1.15;
 }
 
 .toolbar {
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.toolbar-button {
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 12px;
+  font-size: 0.88rem;
+  white-space: nowrap;
 }
 
 .results-summary {
@@ -580,16 +620,20 @@ button:disabled {
 
   .hero-copy h1 {
     max-width: 100%;
-    font-size: clamp(1.6rem, 9vw, 2.3rem);
+    font-size: clamp(2rem, 10vw, 2.8rem);
   }
 
   .panel-header,
   .panel-header-results,
   .origin-actions,
-  .toolbar,
   .filter-group-header,
   .group-actions {
     flex-direction: column;
+    align-items: stretch;
+  }
+
+  .toolbar {
+    flex-wrap: wrap;
     align-items: stretch;
   }
 
@@ -607,10 +651,15 @@ button:disabled {
   .filter-summary {
     flex-wrap: wrap;
     align-items: flex-start;
+    padding: 14px 16px;
   }
 
   .summary-hint {
     width: 100%;
-    padding-right: 0;
+    padding: 2px 0 0;
+  }
+
+  .filter-section-body {
+    padding: 0 16px 16px;
   }
 }

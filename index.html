@@ -6,8 +6,9 @@
     <title>Ordenador de Centros · Junta de Andalucía</title>
     <meta
       name="description"
-      content="Plataforma para ordenar centros educativos de Andalucía por distancia, con filtros y exportación a CSV y XLSX."
+      content="Plataforma para ordenar centros educativos de Andalucía por distancia, con filtros y exportación a CSV, XLSX y PDF."
     />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -15,10 +16,6 @@
       <header class="hero">
         <div class="hero-copy">
           <h1>Ordena centros por distancia</h1>
-          <p class="lead">
-            Introduce una calle, un pueblo o un código postal y obtén el listado ordenado por
-            proximidad, con filtros combinables y exportación a CSV o XLSX.
-          </p>
         </div>
       </header>
 
@@ -32,29 +29,37 @@
             <button class="ghost-button" id="resetFiltersButton" type="button">Limpiar filtros</button>
           </div>
 
-          <form id="originForm" class="origin-form">
-            <label class="field field-wide">
+          <details class="filter-section filter-section-origin">
+            <summary class="filter-summary">
               <span>Punto de referencia</span>
-              <input
-                id="originInput"
-                name="origin"
-                type="text"
-                placeholder="Ej.: Calle Real 12, Bormujos / Utrera / 41007"
-                autocomplete="street-address"
-              />
-            </label>
+              <span class="summary-hint">Calle, pueblo o código postal</span>
+            </summary>
+            <div class="filter-section-body">
+              <form id="originForm" class="origin-form">
+                <label class="field field-wide">
+                  <span>Dirección o localidad</span>
+                  <input
+                    id="originInput"
+                    name="origin"
+                    type="text"
+                    placeholder="Ej.: Calle Real 12, Bormujos / Utrera / 41007"
+                    autocomplete="street-address"
+                  />
+                </label>
 
-            <div class="origin-actions">
-              <button class="primary-button" id="searchOriginButton" type="submit">Ordenar por distancia</button>
-              <button class="ghost-button" id="clearOriginButton" type="button">Quitar distancia</button>
+                <div class="origin-actions">
+                  <button class="primary-button" id="searchOriginButton" type="submit">Ordenar por distancia</button>
+                  <button class="ghost-button" id="clearOriginButton" type="button">Quitar distancia</button>
+                </div>
+
+                <p class="helper helper-strong" id="originStatus">
+                  Si no indicas un origen, el listado se ordena alfabéticamente por provincia, localidad y nombre.
+                </p>
+              </form>
             </div>
+          </details>
 
-            <p class="helper helper-strong" id="originStatus">
-              Si no indicas un origen, el listado se ordena alfabéticamente por provincia, localidad y nombre.
-            </p>
-          </form>
-
-          <details class="filter-section" open>
+          <details class="filter-section">
             <summary class="filter-summary">
               <span>Provincias</span>
               <span class="summary-hint">Marca una, varias o ninguna</span>
@@ -70,7 +75,7 @@
             </div>
           </details>
 
-          <details class="filter-section" open>
+          <details class="filter-section">
             <summary class="filter-summary">
               <span>Búsqueda rápida</span>
               <span class="summary-hint">Localidad, texto y extras</span>
@@ -93,7 +98,11 @@
                   <span>Extras</span>
                   <label><input id="onlyBilingualCheckbox" type="checkbox" /> Solo bilingües</label>
                   <label><input id="onlyWithCoordsCheckbox" type="checkbox" /> Solo con coordenadas</label>
-                  <label class="disabled-inline" id="difficultCheckboxWrap">
+                  <label
+                    class="disabled-inline"
+                    id="difficultCheckboxWrap"
+                    title="Tus CSV actuales no traen una marca explícita de difícil desempeño. El filtro queda desactivado hasta que añadas un listado con esa categoría."
+                  >
                     <input id="onlyDifficultCheckbox" type="checkbox" /> Solo difícil desempeño
                   </label>
                 </div>
@@ -140,9 +149,10 @@
               <p class="results-summary" id="resultsSummary"></p>
             </div>
             <div class="toolbar">
-              <button class="ghost-button" id="copyCodesButton" type="button">Copiar códigos</button>
-              <button class="ghost-button" id="exportCsvButton" type="button">Exportar CSV</button>
-              <button class="primary-button" id="exportXlsxButton" type="button">Exportar XLSX</button>
+              <button class="ghost-button toolbar-button" id="copyCodesButton" type="button">Copiar códigos</button>
+              <button class="ghost-button toolbar-button" id="exportPdfButton" type="button">Exportar PDF</button>
+              <button class="ghost-button toolbar-button" id="exportCsvButton" type="button">Exportar CSV</button>
+              <button class="primary-button toolbar-button" id="exportXlsxButton" type="button">Exportar XLSX</button>
             </div>
           </div>
 
@@ -173,6 +183,8 @@
 
     <script src="data/centros-data.js"></script>
     <script src="vendor/xlsx.full.min.js"></script>
+    <script src="vendor/jspdf.umd.min.js"></script>
+    <script src="vendor/jspdf.plugin.autotable.min.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

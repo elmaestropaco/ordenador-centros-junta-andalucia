@@ -1,29 +1,45 @@
-# GitHub Pages
+# Organizador de centros Junta de Andalucía
 
-Esta carpeta está preparada para subirse tal cual a un repositorio de GitHub Pages.
+Web local para ordenar centros por distancia a una calle, pueblo o código postal, con filtros y exportación.
 
-## Qué contiene
+## Qué hace
 
-- `index.html`
-- `app.js`
-- `styles.css`
-- `data/centros-data.js`
-- `vendor/xlsx.full.min.js`
-- `.nojekyll`
+- Une los CSV de `database` en un único listado.
+- Cruza los centros con el directorio oficial de la Junta para obtener coordenadas.
+- Permite filtrar por tipo de centro, varias provincias a la vez, localidad, bilingüe y lista de origen.
+- Ordena por distancia desde un punto introducido por texto.
+- Exporta los resultados visibles a `CSV`, `XLSX` y `PDF`.
+- Copia al portapapeles el orden actual de códigos.
 
-## Cómo publicarlo
+## Cómo abrirla
 
-1. Crea un repositorio nuevo en GitHub.
-2. Sube el contenido de esta carpeta a la raíz del repositorio.
-3. En GitHub, entra en `Settings` → `Pages`.
-4. En `Build and deployment`, elige:
-   - `Source`: `Deploy from a branch`
-   - `Branch`: `main`
-   - `Folder`: `/ (root)`
-5. Guarda los cambios.
+La forma más cómoda:
 
-GitHub te dará una URL pública al cabo de unos minutos.
+```powershell
+.\start_app.ps1
+```
 
-## Importante
+Eso abre la web en tu navegador y deja un servidor local funcionando mientras la ventana siga abierta.
 
-Si actualizas los datos o el diseño en el proyecto principal, vuelve a copiar aquí los archivos antes de subirlos.
+También puedes abrir [index.html](./index.html) directamente, aunque el modo con servidor local suele dar menos problemas con navegadores.
+
+1. Abre la web.
+2. Escribe una calle, localidad o código postal.
+3. Pulsa `Ordenar por distancia`.
+
+La geocodificación del punto de origen usa OpenStreetMap Nominatim, así que hace falta internet para localizar la dirección que escribas.
+
+## Cómo regenerar los datos
+
+Si cambias o añades CSV en `database`, vuelve a generar el dataset:
+
+```powershell
+python .\scripts\build_dataset.py
+```
+
+Después recarga `index.html`.
+
+## Notas
+
+- Los CSV actuales no incluyen una marca explícita de `difícil desempeño`. Si añades un CSV con esa categoría a `database`, aparecerá como lista de origen al regenerar los datos.
+- Hay un centro del cruce actual sin coordenadas oficiales; al ordenar por distancia se envía al final.
