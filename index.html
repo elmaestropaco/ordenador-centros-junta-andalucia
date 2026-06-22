@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ordenador de Centros · Junta de Andalucía</title>
+    <meta
+      name="description"
+      content="Plataforma para ordenar centros educativos de Andalucía por distancia, con filtros y exportación a CSV y XLSX."
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div class="hero-copy">
+          <h1>Ordena centros por distancia</h1>
+          <p class="lead">
+            Introduce una calle, un pueblo o un código postal y obtén el listado ordenado por
+            proximidad, con filtros combinables y exportación a CSV o XLSX.
+          </p>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="panel controls-panel" id="panelFiltros">
+          <div class="panel-header">
+            <div>
+              <p class="section-kicker">Configuración</p>
+              <h2>Búsqueda y filtros</h2>
+            </div>
+            <button class="ghost-button" id="resetFiltersButton" type="button">Limpiar filtros</button>
+          </div>
+
+          <form id="originForm" class="origin-form">
+            <label class="field field-wide">
+              <span>Punto de referencia</span>
+              <input
+                id="originInput"
+                name="origin"
+                type="text"
+                placeholder="Ej.: Calle Real 12, Bormujos / Utrera / 41007"
+                autocomplete="street-address"
+              />
+            </label>
+
+            <div class="origin-actions">
+              <button class="primary-button" id="searchOriginButton" type="submit">Ordenar por distancia</button>
+              <button class="ghost-button" id="clearOriginButton" type="button">Quitar distancia</button>
+            </div>
+
+            <p class="helper helper-strong" id="originStatus">
+              Si no indicas un origen, el listado se ordena alfabéticamente por provincia, localidad y nombre.
+            </p>
+          </form>
+
+          <details class="filter-section" open>
+            <summary class="filter-summary">
+              <span>Provincias</span>
+              <span class="summary-hint">Marca una, varias o ninguna</span>
+            </summary>
+            <div class="filter-section-body filter-group-priority">
+              <div class="filter-group-header">
+                <div class="group-actions">
+                  <button class="tiny-button" id="selectAllProvincesButton" type="button">Marcar todas</button>
+                  <button class="tiny-button" id="clearProvincesButton" type="button">Vaciar</button>
+                </div>
+              </div>
+              <div class="chip-grid chip-grid-provinces" id="provinceFilters"></div>
+            </div>
+          </details>
+
+          <details class="filter-section" open>
+            <summary class="filter-summary">
+              <span>Búsqueda rápida</span>
+              <span class="summary-hint">Localidad, texto y extras</span>
+            </summary>
+            <div class="filter-section-body">
+              <div class="filters-grid filters-grid-tight">
+                <label class="field">
+                  <span>Localidad</span>
+                  <select id="localitySelect">
+                    <option value="">Todas</option>
+                  </select>
+                </label>
+
+                <label class="field">
+                  <span>Búsqueda rápida</span>
+                  <input id="textSearchInput" type="search" placeholder="Código, nombre, domicilio..." />
+                </label>
+
+                <div class="field checkbox-stack">
+                  <span>Extras</span>
+                  <label><input id="onlyBilingualCheckbox" type="checkbox" /> Solo bilingües</label>
+                  <label><input id="onlyWithCoordsCheckbox" type="checkbox" /> Solo con coordenadas</label>
+                  <label class="disabled-inline" id="difficultCheckboxWrap">
+                    <input id="onlyDifficultCheckbox" type="checkbox" /> Solo difícil desempeño
+                  </label>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <details class="filter-section">
+            <summary class="filter-summary">
+              <span>Tipos de centro</span>
+              <span class="summary-hint">CEIP, IES, CEP, CPR y más</span>
+            </summary>
+            <div class="filter-section-body">
+              <div class="filter-group-header">
+                <button class="tiny-button" id="clearTypesButton" type="button">Vaciar</button>
+              </div>
+              <div class="chip-grid" id="typeFilters"></div>
+            </div>
+          </details>
+
+          <details class="filter-section">
+            <summary class="filter-summary">
+              <span>Listas de origen</span>
+              <span class="summary-hint">Primaria, IES o combinados</span>
+            </summary>
+            <div class="filter-section-body">
+              <div class="filter-group-header">
+                <button class="tiny-button" id="clearSourcesButton" type="button">Vaciar</button>
+              </div>
+              <div class="chip-grid" id="sourceFilters"></div>
+              <p class="helper">
+                Si más adelante añades un CSV nuevo a la carpeta <code>database</code>, este filtro lo recogerá al
+                regenerar los datos.
+              </p>
+            </div>
+          </details>
+        </section>
+
+        <section class="panel results-panel" id="panelResultados">
+          <div class="panel-header panel-header-results">
+            <div>
+              <p class="section-kicker">Salida</p>
+              <h2>Resultados</h2>
+              <p class="results-summary" id="resultsSummary"></p>
+            </div>
+            <div class="toolbar">
+              <button class="ghost-button" id="copyCodesButton" type="button">Copiar códigos</button>
+              <button class="ghost-button" id="exportCsvButton" type="button">Exportar CSV</button>
+              <button class="primary-button" id="exportXlsxButton" type="button">Exportar XLSX</button>
+            </div>
+          </div>
+
+          <div class="active-filters" id="activeFilters"></div>
+          <div class="notice" id="noticeBox"></div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Orden</th>
+                  <th>Código</th>
+                  <th>Tipo</th>
+                  <th>Centro</th>
+                  <th>Distancia</th>
+                  <th>Localidad</th>
+                  <th>Provincia</th>
+                  <th>Domicilio</th>
+                  <th>Detalles</th>
+                </tr>
+              </thead>
+              <tbody id="resultsBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="data/centros-data.js"></script>
+    <script src="vendor/xlsx.full.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
